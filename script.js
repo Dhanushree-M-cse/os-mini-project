@@ -37,6 +37,8 @@ function display(res, gantt, name) {
     blocks.innerHTML = "";
     times.innerHTML = "";
 
+    document.getElementById("badge").innerText = name;
+
     let tatSum = 0, wtSum = 0;
 
     res.forEach(p => {
@@ -62,19 +64,28 @@ function display(res, gantt, name) {
     </tr>`;
 
     let time = 0;
-    times.innerHTML += `<div class="time">0</div>`;
+    times.innerHTML = `<div class="time">0</div>`;
 
-    gantt.forEach(p => {
-        blocks.innerHTML += `<div class="gantt-block">${p}</div>`;
-        time++;
-        times.innerHTML += `<div class="time">${time}</div>`;
+    gantt.forEach((p, i) => {
+        setTimeout(() => {
+            let block = document.createElement("div");
+            block.className = "gantt-block";
+            block.innerText = p;
+            blocks.appendChild(block);
+
+            time++;
+            let t = document.createElement("div");
+            t.className = "time";
+            t.innerText = time;
+            times.appendChild(t);
+        }, i * 300);
     });
 }
 
-/* FCFS */
+/* ALGORITHMS (same logic, but push per unit time) */
+
 function fcfs({at, bt}) {
     let time = 0, res = [], gantt = [];
-
     for (let i = 0; i < at.length; i++) {
         time = Math.max(time, at[i]);
         let ct = time + bt[i];
@@ -82,17 +93,14 @@ function fcfs({at, bt}) {
         res.push({id:i, at:at[i], bt:bt[i], ct,
             tat:ct-at[i], wt:ct-at[i]-bt[i]});
 
-        for (let j=0;j<bt[i];j++) gantt.push("P"+i);
-
+        for(let j=0;j<bt[i];j++) gantt.push("P"+i);
         time = ct;
     }
     display(res, gantt, "FCFS");
 }
 
-/* SJF */
 function sjf({at, bt}) {
     let n=at.length, done=[], time=0, res=[], gantt=[];
-
     while(done.length<n){
         let idx=-1, min=Infinity;
         for(let i=0;i<n;i++){
@@ -103,23 +111,19 @@ function sjf({at, bt}) {
         if(idx==-1){ time++; continue; }
 
         let ct=time+bt[idx];
-
         res.push({id:idx,at:at[idx],bt:bt[idx],ct,
             tat:ct-at[idx],wt:ct-at[idx]-bt[idx]});
 
-        for (let j=0;j<bt[idx];j++) gantt.push("P"+idx);
-
+        for(let j=0;j<bt[idx];j++) gantt.push("P"+idx);
         done.push(idx);
         time=ct;
     }
     display(res,gantt,"SJF");
 }
 
-/* SRTF */
 function srtf({at, bt}) {
     let n=at.length, rt=[...bt], ct=Array(n).fill(0);
     let time=0, completed=0, gantt=[];
-
     while(completed<n){
         let idx=-1, min=Infinity;
         for(let i=0;i<n;i++){
@@ -129,13 +133,10 @@ function srtf({at, bt}) {
         }
         if(idx==-1){ time++; continue; }
 
-        rt[idx]--;
-        gantt.push("P"+idx);
-        time++;
+        rt[idx]--; gantt.push("P"+idx); time++;
 
         if(rt[idx]==0){ ct[idx]=time; completed++; }
     }
-
     let res=[];
     for(let i=0;i<n;i++){
         res.push({id:i,at:at[i],bt:bt[i],ct:ct[i],
@@ -144,7 +145,6 @@ function srtf({at, bt}) {
     display(res,gantt,"SRTF");
 }
 
-/* RR */
 function rr({at, bt}, tq) {
     let n=at.length, rt=[...bt], ct=Array(n).fill(0);
     let time=0, queue=[], visited=Array(n).fill(false), gantt=[];
@@ -155,7 +155,6 @@ function rr({at, bt}, tq) {
                 queue.push(i); visited[i]=true;
             }
         }
-
         if(queue.length==0){
             if(visited.every(v=>v)) break;
             time++; continue;
@@ -165,13 +164,10 @@ function rr({at, bt}, tq) {
 
         if(rt[i]>tq){
             for(let j=0;j<tq;j++) gantt.push("P"+i);
-            time+=tq;
-            rt[i]-=tq;
+            time+=tq; rt[i]-=tq;
         } else {
             for(let j=0;j<rt[i];j++) gantt.push("P"+i);
-            time+=rt[i];
-            rt[i]=0;
-            ct[i]=time;
+            time+=rt[i]; rt[i]=0; ct[i]=time;
         }
 
         for(let j=0;j<n;j++){
@@ -191,10 +187,8 @@ function rr({at, bt}, tq) {
     display(res,gantt,"Round Robin");
 }
 
-/* Priority NP */
 function priorityNP({at, bt, pr}) {
     let n=at.length, done=[], time=0, res=[], gantt=[];
-
     while(done.length<n){
         let idx=-1, best=Infinity;
         for(let i=0;i<n;i++){
@@ -205,11 +199,10 @@ function priorityNP({at, bt, pr}) {
         if(idx==-1){ time++; continue; }
 
         let ct=time+bt[idx];
-
         res.push({id:idx,at:at[idx],bt:bt[idx],ct,
             tat:ct-at[idx],wt:ct-at[idx]-bt[idx]});
 
-        for (let j=0;j<bt[idx];j++) gantt.push("P"+idx);
+        for(let j=0;j<bt[idx];j++) gantt.push("P"+idx);
 
         done.push(idx);
         time=ct;
@@ -217,11 +210,9 @@ function priorityNP({at, bt, pr}) {
     display(res,gantt,"Priority NP");
 }
 
-/* Priority P */
 function priorityP({at, bt, pr}) {
     let n=at.length, rt=[...bt], ct=Array(n).fill(0);
     let time=0, completed=0, gantt=[];
-
     while(completed<n){
         let idx=-1, best=Infinity;
         for(let i=0;i<n;i++){
@@ -231,9 +222,7 @@ function priorityP({at, bt, pr}) {
         }
         if(idx==-1){ time++; continue; }
 
-        rt[idx]--;
-        gantt.push("P"+idx);
-        time++;
+        rt[idx]--; gantt.push("P"+idx); time++;
 
         if(rt[idx]==0){ ct[idx]=time; completed++; }
     }
