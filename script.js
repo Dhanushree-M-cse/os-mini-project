@@ -1,7 +1,8 @@
 window.onload = toggleFields;
 
+/* ---------- UI CONTROL ---------- */
 function toggleFields() {
-    let algo = document.getElementById("algo").value;
+    const algo = document.getElementById("algo").value;
 
     document.getElementById("tqDiv").style.display =
         (algo === "rr") ? "block" : "none";
@@ -10,19 +11,21 @@ function toggleFields() {
         (algo === "pnp" || algo === "pp") ? "block" : "none";
 }
 
+/* ---------- INPUT ---------- */
 function getData() {
     return {
-        at: at.value.split(" ").map(Number),
-        bt: bt.value.split(" ").map(Number),
-        pr: pr.value.split(" ").map(Number)
+        at: document.getElementById("at").value.trim().split(/\s+/).map(Number),
+        bt: document.getElementById("bt").value.trim().split(/\s+/).map(Number),
+        pr: document.getElementById("pr").value.trim().split(/\s+/).map(Number)
     };
 }
 
+/* ---------- MAIN ---------- */
 function solve() {
     try {
-        let algo = document.getElementById("algo").value;
-        let tq = parseInt(document.getElementById("tq").value) || 1;
-        let data = getData();
+        const algo = document.getElementById("algo").value;
+        const tq = parseInt(document.getElementById("tq").value) || 1;
+        const data = getData();
 
         // CLEAR OLD OUTPUT
         document.getElementById("table").innerHTML = "";
@@ -32,30 +35,26 @@ function solve() {
         else if (algo === "sjf") sjf(data);
         else if (algo === "srtf") srtf(data);
         else if (algo === "rr") rr(data, tq);
-        else if (algo === "pnp") pnp(data);
-        else if (algo === "pp") pp(data);
+        else if (algo === "pnp") priorityNP(data);
+        else if (algo === "pp") priorityP(data);
 
-    } catch (e) {
-        console.error("Error:", e);
-        alert("Something went wrong. Check inputs.");
+    } catch (err) {
+        console.error(err);
+        alert("Error! Check your input values.");
     }
 }
 
-function algoSelect(){
-    return document.getElementById("algo").value;
-}
-
-/* DISPLAY */
+/* ---------- DISPLAY ---------- */
 function display(res, gantt) {
-    let table = document.getElementById("table");
-    let ganttDiv = document.getElementById("gantt");
+    const table = document.getElementById("table");
+    const ganttDiv = document.getElementById("gantt");
 
     table.innerHTML = "";
     ganttDiv.innerHTML = "";
 
     let tatSum = 0, wtSum = 0;
 
-    // TABLE DATA
+    // TABLE
     res.forEach(p => {
         tatSum += p.tat;
         wtSum += p.wt;
@@ -71,208 +70,282 @@ function display(res, gantt) {
         </tr>`;
     });
 
-    // ✅ AVERAGE CALCULATION
-    let avgTAT = (tatSum / res.length).toFixed(2);
-    let avgWT = (wtSum / res.length).toFixed(2);
-
-    // ✅ ADD TO TABLE
+    // AVERAGE
     table.innerHTML += `
-    <tr style="font-weight:bold; background:#fef3c7;">
+    <tr style="font-weight:bold;background:#fef3c7;">
         <td colspan="4">Average</td>
-        <td>${avgTAT}</td>
-        <td>${avgWT}</td>
+        <td>${(tatSum / res.length).toFixed(2)}</td>
+        <td>${(wtSum / res.length).toFixed(2)}</td>
     </tr>`;
 
-    // 🎯 GANTT CHART
+    // GANTT CHART
     gantt.forEach(g => {
-        let div = document.createElement("div");
-        div.className = "block";
-        div.style.width = (g.time * 40) + "px";
+        const block = document.createElement("div");
+        block.className = "block";
+        block.style.width = (g.time * 40) + "px";
 
-        div.innerHTML = `
+        block.innerHTML = `
             ${g.p}
             <div class="time-label">${g.end}</div>
         `;
 
-        ganttDiv.appendChild(div);
+        ganttDiv.appendChild(block);
     });
 }
 
-    
+/* ---------- FCFS ---------- */
+function fcfs({at, bt}) {
+    let time = 0, res = [], gantt = [];
 
-/* FCFS */
-function fcfs({at,bt}){
-    let time=0,res=[],gantt=[];
-    for(let i=0;i<at.length;i++){
-        time=Math.max(time,at[i]);
-        let start=time;
-        let end=time+bt[i];
+    for (let i = 0; i < at.length; i++) {
+        time = Math.max(time, at[i]);
+        let end = time + bt[i];
 
-        res.push({id:i,at:at[i],bt:bt[i],
-        ct:end,tat:end-at[i],wt:end-at[i]-bt[i]});
+        res.push({
+            id: i,
+            at: at[i],
+            bt: bt[i],
+            ct: end,
+            tat: end - at[i],
+            wt: end - at[i] - bt[i]
+        });
 
-        gantt.push({p:"P"+i,time:bt[i],end:end});
-        time=end;
+        gantt.push({p: "P" + i, time: bt[i], end: end});
+        time = end;
     }
-    display(res,gantt);
+
+    display(res, gantt);
 }
 
-/* SJF */
-function sjf({at,bt}){
-    let n=at.length,done=[],time=0,res=[],gantt=[];
-    while(done.length<n){
-        let idx=-1,min=1e9;
-        for(let i=0;i<n;i++){
-            if(!done.includes(i)&&at[i]<=time&&bt[i]<min){
-                min=bt[i]; idx=i;
+/* ---------- SJF (NON-PREEMPTIVE) ---------- */
+function sjf({at, bt}) {
+    let n = at.length, done = [], time = 0, res = [], gantt = [];
+
+    while (done.length < n) {
+        let idx = -1, min = Infinity;
+
+        for (let i = 0; i < n; i++) {
+            if (!done.includes(i) && at[i] <= time && bt[i] < min) {
+                min = bt[i];
+                idx = i;
             }
         }
-        if(idx==-1){time++;continue;}
 
-        let end=time+bt[idx];
-        res.push({id:idx,at:at[idx],bt:bt[idx],
-        ct:end,tat:end-at[idx],wt:end-at[idx]-bt[idx]});
+        if (idx === -1) {
+            time++;
+            continue;
+        }
 
-        gantt.push({p:"P"+idx,time:bt[idx],end:end});
+        let end = time + bt[idx];
+
+        res.push({
+            id: idx,
+            at: at[idx],
+            bt: bt[idx],
+            ct: end,
+            tat: end - at[idx],
+            wt: end - at[idx] - bt[idx]
+        });
+
+        gantt.push({p: "P" + idx, time: bt[idx], end: end});
+
         done.push(idx);
-        time=end;
+        time = end;
     }
-    display(res,gantt);
+
+    display(res, gantt);
 }
 
-/* SRTF */
-function srtf({at,bt}){
-    let n=at.length,rt=[...bt],time=0,done=0;
-    let ct=Array(n).fill(0),gantt=[];
+/* ---------- SRTF ---------- */
+function srtf({at, bt}) {
+    let n = at.length, rt = [...bt], time = 0, completed = 0;
+    let ct = Array(n).fill(0), gantt = [];
 
-    while(done<n){
-        let idx=-1,min=1e9;
-        for(let i=0;i<n;i++){
-            if(at[i]<=time&&rt[i]>0&&rt[i]<min){
-                min=rt[i]; idx=i;
+    while (completed < n) {
+        let idx = -1, min = Infinity;
+
+        for (let i = 0; i < n; i++) {
+            if (at[i] <= time && rt[i] > 0 && rt[i] < min) {
+                min = rt[i];
+                idx = i;
             }
         }
-        if(idx==-1){time++;continue;}
 
-        if(gantt.length && gantt[gantt.length-1].p==="P"+idx){
-            gantt[gantt.length-1].time++;
-            gantt[gantt.length-1].end=time+1;
+        if (idx === -1) {
+            time++;
+            continue;
+        }
+
+        if (gantt.length && gantt[gantt.length - 1].p === "P" + idx) {
+            gantt[gantt.length - 1].time++;
+            gantt[gantt.length - 1].end = time + 1;
         } else {
-            gantt.push({p:"P"+idx,time:1,end:time+1});
+            gantt.push({p: "P" + idx, time: 1, end: time + 1});
         }
 
-        rt[idx]--; time++;
+        rt[idx]--;
+        time++;
 
-        if(rt[idx]==0){ct[idx]=time;done++;}
+        if (rt[idx] === 0) {
+            ct[idx] = time;
+            completed++;
+        }
     }
 
-    let res=[];
-    for(let i=0;i<n;i++){
-        res.push({id:i,at:at[i],bt:bt[i],
-        ct:ct[i],tat:ct[i]-at[i],wt:ct[i]-at[i]-bt[i]});
+    let res = [];
+    for (let i = 0; i < n; i++) {
+        res.push({
+            id: i,
+            at: at[i],
+            bt: bt[i],
+            ct: ct[i],
+            tat: ct[i] - at[i],
+            wt: ct[i] - at[i] - bt[i]
+        });
     }
 
-    display(res,gantt);
+    display(res, gantt);
 }
 
-/* RR */
-function rr({at,bt},tq){
-    let n=at.length,rt=[...bt],time=0,queue=[],ct=Array(n).fill(0);
-    let visited=Array(n).fill(false),gantt=[];
+/* ---------- ROUND ROBIN ---------- */
+function rr({at, bt}, tq) {
+    let n = at.length, rt = [...bt], ct = Array(n).fill(0);
+    let time = 0, queue = [], visited = Array(n).fill(false), gantt = [];
 
-    while(true){
-        for(let i=0;i<n;i++){
-            if(at[i]<=time&&!visited[i]){
-                queue.push(i); visited[i]=true;
-            }
-        }
-        if(queue.length===0){
-            if(visited.every(v=>v)) break;
-            time++; continue;
-        }
-
-        let i=queue.shift();
-        let exec=Math.min(tq,rt[i]);
-
-        gantt.push({p:"P"+i,time:exec,end:time+exec});
-
-        time+=exec;
-        rt[i]-=exec;
-
-        for(let j=0;j<n;j++){
-            if(at[j]<=time&&!visited[j]){
-                queue.push(j); visited[j]=true;
+    while (true) {
+        for (let i = 0; i < n; i++) {
+            if (at[i] <= time && !visited[i]) {
+                queue.push(i);
+                visited[i] = true;
             }
         }
 
-        if(rt[i]>0) queue.push(i);
-        else ct[i]=time;
+        if (queue.length === 0) {
+            if (visited.every(v => v)) break;
+            time++;
+            continue;
+        }
+
+        let i = queue.shift();
+        let exec = Math.min(tq, rt[i]);
+
+        gantt.push({p: "P" + i, time: exec, end: time + exec});
+
+        time += exec;
+        rt[i] -= exec;
+
+        for (let j = 0; j < n; j++) {
+            if (at[j] <= time && !visited[j]) {
+                queue.push(j);
+                visited[j] = true;
+            }
+        }
+
+        if (rt[i] > 0) queue.push(i);
+        else ct[i] = time;
     }
 
-    let res=[];
-    for(let i=0;i<n;i++){
-        res.push({id:i,at:at[i],bt:bt[i],
-        ct:ct[i],tat:ct[i]-at[i],wt:ct[i]-at[i]-bt[i]});
+    let res = [];
+    for (let i = 0; i < n; i++) {
+        res.push({
+            id: i,
+            at: at[i],
+            bt: bt[i],
+            ct: ct[i],
+            tat: ct[i] - at[i],
+            wt: ct[i] - at[i] - bt[i]
+        });
     }
 
-    display(res,gantt);
+    display(res, gantt);
 }
 
-/* Priority NP */
-function pnp({at,bt,pr}){
-    let n=at.length,done=[],time=0,res=[],gantt=[];
-    while(done.length<n){
-        let idx=-1,best=1e9;
-        for(let i=0;i<n;i++){
-            if(!done.includes(i)&&at[i]<=time&&pr[i]<best){
-                best=pr[i]; idx=i;
+/* ---------- PRIORITY NON-PREEMPTIVE ---------- */
+function priorityNP({at, bt, pr}) {
+    let n = at.length, done = [], time = 0, res = [], gantt = [];
+
+    while (done.length < n) {
+        let idx = -1, best = Infinity;
+
+        for (let i = 0; i < n; i++) {
+            if (!done.includes(i) && at[i] <= time && pr[i] < best) {
+                best = pr[i];
+                idx = i;
             }
         }
-        if(idx==-1){time++;continue;}
 
-        let end=time+bt[idx];
+        if (idx === -1) {
+            time++;
+            continue;
+        }
 
-        res.push({id:idx,at:at[idx],bt:bt[idx],
-        ct:end,tat:end-at[idx],wt:end-at[idx]-bt[idx]});
+        let end = time + bt[idx];
 
-        gantt.push({p:"P"+idx,time:bt[idx],end:end});
+        res.push({
+            id: idx,
+            at: at[idx],
+            bt: bt[idx],
+            ct: end,
+            tat: end - at[idx],
+            wt: end - at[idx] - bt[idx]
+        });
+
+        gantt.push({p: "P" + idx, time: bt[idx], end: end});
+
         done.push(idx);
-        time=end;
+        time = end;
     }
-    display(res,gantt);
+
+    display(res, gantt);
 }
 
-/* Priority P */
-function pp({at,bt,pr}){
-    let n=at.length,rt=[...bt],time=0,done=0;
-    let ct=Array(n).fill(0),gantt=[];
+/* ---------- PRIORITY PREEMPTIVE ---------- */
+function priorityP({at, bt, pr}) {
+    let n = at.length, rt = [...bt], time = 0, completed = 0;
+    let ct = Array(n).fill(0), gantt = [];
 
-    while(done<n){
-        let idx=-1,best=1e9;
-        for(let i=0;i<n;i++){
-            if(at[i]<=time&&rt[i]>0&&pr[i]<best){
-                best=pr[i]; idx=i;
+    while (completed < n) {
+        let idx = -1, best = Infinity;
+
+        for (let i = 0; i < n; i++) {
+            if (at[i] <= time && rt[i] > 0 && pr[i] < best) {
+                best = pr[i];
+                idx = i;
             }
         }
-        if(idx==-1){time++;continue;}
 
-        if(gantt.length && gantt[gantt.length-1].p==="P"+idx){
-            gantt[gantt.length-1].time++;
-            gantt[gantt.length-1].end=time+1;
-        } else {
-            gantt.push({p:"P"+idx,time:1,end:time+1});
+        if (idx === -1) {
+            time++;
+            continue;
         }
 
-        rt[idx]--; time++;
+        if (gantt.length && gantt[gantt.length - 1].p === "P" + idx) {
+            gantt[gantt.length - 1].time++;
+            gantt[gantt.length - 1].end = time + 1;
+        } else {
+            gantt.push({p: "P" + idx, time: 1, end: time + 1});
+        }
 
-        if(rt[idx]==0){ct[idx]=time;done++;}
+        rt[idx]--;
+        time++;
+
+        if (rt[idx] === 0) {
+            ct[idx] = time;
+            completed++;
+        }
     }
 
-    let res=[];
-    for(let i=0;i<n;i++){
-        res.push({id:i,at:at[i],bt:bt[i],
-        ct:ct[i],tat:ct[i]-at[i],wt:ct[i]-at[i]-bt[i]});
+    let res = [];
+    for (let i = 0; i < n; i++) {
+        res.push({
+            id: i,
+            at: at[i],
+            bt: bt[i],
+            ct: ct[i],
+            tat: ct[i] - at[i],
+            wt: ct[i] - at[i] - bt[i]
+        });
     }
 
-    display(res,gantt);
+    display(res, gantt);
 }
