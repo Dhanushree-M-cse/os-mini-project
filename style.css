@@ -18,7 +18,7 @@ h1 {
 
 .panel {
     flex: 1;
-    background: #ffffff;
+    background: #fff;
     border-radius: 20px;
     padding: 20px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.08);
@@ -45,10 +45,10 @@ button {
     border-radius: 12px;
     background: linear-gradient(135deg, #a78bfa, #f9a8d4);
     color: white;
-    font-weight: bold;
     cursor: pointer;
 }
 
+/* Gantt */
 #ganttBlocks {
     display: flex;
     margin-top: 10px;
@@ -58,9 +58,20 @@ button {
     padding: 10px;
     min-width: 40px;
     text-align: center;
-    background: #c7d2fe;
     margin-right: 2px;
     border-radius: 6px;
+    background: #c7d2fe;
+
+    opacity: 0;
+    transform: translateY(20px);
+    animation: pop 0.4s ease forwards;
+}
+
+@keyframes pop {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 #ganttTime {
@@ -72,6 +83,7 @@ button {
     min-width: 40px;
 }
 
+/* Table */
 table {
     width: 100%;
     margin-top: 20px;
