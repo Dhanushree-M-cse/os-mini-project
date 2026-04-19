@@ -51,27 +51,15 @@ button {
 /* Gantt */
 #ganttBlocks {
     display: flex;
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
 .gantt-block {
-    padding: 10px;
-    min-width: 40px;
     text-align: center;
-    margin-right: 2px;
-    border-radius: 6px;
+    padding: 10px;
+    border-radius: 8px;
     background: #c7d2fe;
-
-    opacity: 0;
-    transform: translateY(20px);
-    animation: pop 0.4s ease forwards;
-}
-
-@keyframes pop {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    margin-right: 2px;
 }
 
 #ganttTime {
@@ -80,7 +68,7 @@ button {
 }
 
 .time {
-    min-width: 40px;
+    text-align: left;
 }
 
 /* Table */
