@@ -1,117 +1,237 @@
 window.onload = toggleFields;
 
 function toggleFields() {
-    let algo = document.getElementById("algo").value;
-    document.getElementById("tqDiv").style.display = (algo === "rr") ? "block" : "none";
-    document.getElementById("priorityDiv").style.display =
-        (algo === "pnp" || algo === "pp") ? "block" : "none";
+    let a = document.getElementById("algo").value;
+    tqDiv.style.display = a==="rr"?"block":"none";
+    priorityDiv.style.display = (a==="pnp"||a==="pp")?"block":"none";
 }
 
 function getData() {
     return {
-        at: document.getElementById("at").value.split(" ").map(Number),
-        bt: document.getElementById("bt").value.split(" ").map(Number),
-        pr: document.getElementById("pr").value.split(" ").map(Number)
+        at: at.value.split(" ").map(Number),
+        bt: bt.value.split(" ").map(Number),
+        pr: pr.value.split(" ").map(Number)
     };
 }
 
-function solve() {
-    let algo = document.getElementById("algo").value;
-    let tq = parseInt(document.getElementById("tq").value) || 1;
-    let data = getData();
+function solve(){
+    let algo = algoSelect();
+    let tq = parseInt(document.getElementById("tq").value)||1;
+    let d = getData();
 
-    if (algo === "fcfs") fcfs(data);
+    if(algo==="fcfs") fcfs(d);
+    else if(algo==="sjf") sjf(d);
+    else if(algo==="srtf") srtf(d);
+    else if(algo==="rr") rr(d,tq);
+    else if(algo==="pnp") pnp(d);
+    else if(algo==="pp") pp(d);
 }
 
-/* DISPLAY (CORRECT GANTT) */
-function display(res, gantt) {
-    let table = document.getElementById("table");
-    let blocks = document.getElementById("ganttBlocks");
-    let times = document.getElementById("ganttTime");
+function algoSelect(){
+    return document.getElementById("algo").value;
+}
 
-    table.innerHTML = "";
-    blocks.innerHTML = "";
-    times.innerHTML = "";
+/* DISPLAY */
+function display(res, gantt){
+    table.innerHTML="";
+    ganttDiv = document.getElementById("gantt");
+    ganttDiv.innerHTML="";
 
-    let tatSum = 0, wtSum = 0;
-
-    res.forEach(p => {
-        tatSum += p.tat;
-        wtSum += p.wt;
-
-        table.innerHTML += `
-        <tr>
-            <td>P${p.id}</td>
-            <td>${p.at}</td>
-            <td>${p.bt}</td>
-            <td>${p.ct}</td>
-            <td>${p.tat}</td>
-            <td>${p.wt}</td>
-        </tr>`;
+    let t=0;
+    gantt.forEach(g=>{
+        let div=document.createElement("div");
+        div.className="block";
+        div.style.width=(g.time*40)+"px";
+        div.innerHTML = g.p + `<div class="time-label">${g.end}</div>`;
+        ganttDiv.appendChild(div);
     });
 
-    table.innerHTML += `
-    <tr>
-        <td colspan="4"><b>Avg</b></td>
-        <td>${(tatSum/res.length).toFixed(2)}</td>
-        <td>${(wtSum/res.length).toFixed(2)}</td>
-    </tr>`;
-
-    /* COMPRESS GANTT */
-    let compressed = [];
-    let prev = gantt[0], count = 1;
-
-    for (let i = 1; i < gantt.length; i++) {
-        if (gantt[i] === prev) count++;
-        else {
-            compressed.push({p: prev, time: count});
-            prev = gantt[i];
-            count = 1;
-        }
-    }
-    compressed.push({p: prev, time: count});
-
-    /* DRAW */
-    let currentTime = 0;
-    times.innerHTML += `<div class="time">0</div>`;
-
-    compressed.forEach(item => {
-        let block = document.createElement("div");
-        block.className = "gantt-block";
-        block.innerText = item.p;
-        block.style.width = (item.time * 40) + "px";
-
-        blocks.appendChild(block);
-
-        currentTime += item.time;
-        times.innerHTML += `<div class="time">${currentTime}</div>`;
+    res.forEach(p=>{
+        table.innerHTML+=`
+        <tr>
+        <td>P${p.id}</td>
+        <td>${p.at}</td>
+        <td>${p.bt}</td>
+        <td>${p.ct}</td>
+        <td>${p.tat}</td>
+        <td>${p.wt}</td>
+        </tr>`;
     });
 }
 
 /* FCFS */
-function fcfs({at, bt}) {
-    let time = 0, res = [], gantt = [];
+function fcfs({at,bt}){
+    let time=0,res=[],gantt=[];
+    for(let i=0;i<at.length;i++){
+        time=Math.max(time,at[i]);
+        let start=time;
+        let end=time+bt[i];
 
-    for (let i = 0; i < at.length; i++) {
-        time = Math.max(time, at[i]);
+        res.push({id:i,at:at[i],bt:bt[i],
+        ct:end,tat:end-at[i],wt:end-at[i]-bt[i]});
 
-        let ct = time + bt[i];
+        gantt.push({p:"P"+i,time:bt[i],end:end});
+        time=end;
+    }
+    display(res,gantt);
+}
 
-        res.push({
-            id: i,
-            at: at[i],
-            bt: bt[i],
-            ct: ct,
-            tat: ct - at[i],
-            wt: ct - at[i] - bt[i]
-        });
+/* SJF */
+function sjf({at,bt}){
+    let n=at.length,done=[],time=0,res=[],gantt=[];
+    while(done.length<n){
+        let idx=-1,min=1e9;
+        for(let i=0;i<n;i++){
+            if(!done.includes(i)&&at[i]<=time&&bt[i]<min){
+                min=bt[i]; idx=i;
+            }
+        }
+        if(idx==-1){time++;continue;}
 
-        for (let j = 0; j < bt[i]; j++) {
-            gantt.push("P" + i);
+        let end=time+bt[idx];
+        res.push({id:idx,at:at[idx],bt:bt[idx],
+        ct:end,tat:end-at[idx],wt:end-at[idx]-bt[idx]});
+
+        gantt.push({p:"P"+idx,time:bt[idx],end:end});
+        done.push(idx);
+        time=end;
+    }
+    display(res,gantt);
+}
+
+/* SRTF */
+function srtf({at,bt}){
+    let n=at.length,rt=[...bt],time=0,done=0;
+    let ct=Array(n).fill(0),gantt=[];
+
+    while(done<n){
+        let idx=-1,min=1e9;
+        for(let i=0;i<n;i++){
+            if(at[i]<=time&&rt[i]>0&&rt[i]<min){
+                min=rt[i]; idx=i;
+            }
+        }
+        if(idx==-1){time++;continue;}
+
+        if(gantt.length && gantt[gantt.length-1].p==="P"+idx){
+            gantt[gantt.length-1].time++;
+            gantt[gantt.length-1].end=time+1;
+        } else {
+            gantt.push({p:"P"+idx,time:1,end:time+1});
         }
 
-        time = ct;
+        rt[idx]--; time++;
+
+        if(rt[idx]==0){ct[idx]=time;done++;}
     }
 
-    display(res, gantt);
+    let res=[];
+    for(let i=0;i<n;i++){
+        res.push({id:i,at:at[i],bt:bt[i],
+        ct:ct[i],tat:ct[i]-at[i],wt:ct[i]-at[i]-bt[i]});
+    }
+
+    display(res,gantt);
+}
+
+/* RR */
+function rr({at,bt},tq){
+    let n=at.length,rt=[...bt],time=0,queue=[],ct=Array(n).fill(0);
+    let visited=Array(n).fill(false),gantt=[];
+
+    while(true){
+        for(let i=0;i<n;i++){
+            if(at[i]<=time&&!visited[i]){
+                queue.push(i); visited[i]=true;
+            }
+        }
+        if(queue.length===0){
+            if(visited.every(v=>v)) break;
+            time++; continue;
+        }
+
+        let i=queue.shift();
+        let exec=Math.min(tq,rt[i]);
+
+        gantt.push({p:"P"+i,time:exec,end:time+exec});
+
+        time+=exec;
+        rt[i]-=exec;
+
+        for(let j=0;j<n;j++){
+            if(at[j]<=time&&!visited[j]){
+                queue.push(j); visited[j]=true;
+            }
+        }
+
+        if(rt[i]>0) queue.push(i);
+        else ct[i]=time;
+    }
+
+    let res=[];
+    for(let i=0;i<n;i++){
+        res.push({id:i,at:at[i],bt:bt[i],
+        ct:ct[i],tat:ct[i]-at[i],wt:ct[i]-at[i]-bt[i]});
+    }
+
+    display(res,gantt);
+}
+
+/* Priority NP */
+function pnp({at,bt,pr}){
+    let n=at.length,done=[],time=0,res=[],gantt=[];
+    while(done.length<n){
+        let idx=-1,best=1e9;
+        for(let i=0;i<n;i++){
+            if(!done.includes(i)&&at[i]<=time&&pr[i]<best){
+                best=pr[i]; idx=i;
+            }
+        }
+        if(idx==-1){time++;continue;}
+
+        let end=time+bt[idx];
+
+        res.push({id:idx,at:at[idx],bt:bt[idx],
+        ct:end,tat:end-at[idx],wt:end-at[idx]-bt[idx]});
+
+        gantt.push({p:"P"+idx,time:bt[idx],end:end});
+        done.push(idx);
+        time=end;
+    }
+    display(res,gantt);
+}
+
+/* Priority P */
+function pp({at,bt,pr}){
+    let n=at.length,rt=[...bt],time=0,done=0;
+    let ct=Array(n).fill(0),gantt=[];
+
+    while(done<n){
+        let idx=-1,best=1e9;
+        for(let i=0;i<n;i++){
+            if(at[i]<=time&&rt[i]>0&&pr[i]<best){
+                best=pr[i]; idx=i;
+            }
+        }
+        if(idx==-1){time++;continue;}
+
+        if(gantt.length && gantt[gantt.length-1].p==="P"+idx){
+            gantt[gantt.length-1].time++;
+            gantt[gantt.length-1].end=time+1;
+        } else {
+            gantt.push({p:"P"+idx,time:1,end:time+1});
+        }
+
+        rt[idx]--; time++;
+
+        if(rt[idx]==0){ct[idx]=time;done++;}
+    }
+
+    let res=[];
+    for(let i=0;i<n;i++){
+        res.push({id:i,at:at[i],bt:bt[i],
+        ct:ct[i],tat:ct[i]-at[i],wt:ct[i]-at[i]-bt[i]});
+    }
+
+    display(res,gantt);
 }
