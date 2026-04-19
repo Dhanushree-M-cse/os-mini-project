@@ -42,32 +42,59 @@ function algoSelect(){
 }
 
 /* DISPLAY */
-function display(res, gantt){
-    table.innerHTML="";
-    ganttDiv = document.getElementById("gantt");
-    ganttDiv.innerHTML="";
+function display(res, gantt) {
+    let table = document.getElementById("table");
+    let ganttDiv = document.getElementById("gantt");
 
-    let t=0;
-    gantt.forEach(g=>{
-        let div=document.createElement("div");
-        div.className="block";
-        div.style.width=(g.time*40)+"px";
-        div.innerHTML = g.p + `<div class="time-label">${g.end}</div>`;
-        ganttDiv.appendChild(div);
-    });
+    table.innerHTML = "";
+    ganttDiv.innerHTML = "";
 
-    res.forEach(p=>{
-        table.innerHTML+=`
+    let tatSum = 0, wtSum = 0;
+
+    // TABLE DATA
+    res.forEach(p => {
+        tatSum += p.tat;
+        wtSum += p.wt;
+
+        table.innerHTML += `
         <tr>
-        <td>P${p.id}</td>
-        <td>${p.at}</td>
-        <td>${p.bt}</td>
-        <td>${p.ct}</td>
-        <td>${p.tat}</td>
-        <td>${p.wt}</td>
+            <td>P${p.id}</td>
+            <td>${p.at}</td>
+            <td>${p.bt}</td>
+            <td>${p.ct}</td>
+            <td>${p.tat}</td>
+            <td>${p.wt}</td>
         </tr>`;
     });
+
+    // ✅ AVERAGE CALCULATION
+    let avgTAT = (tatSum / res.length).toFixed(2);
+    let avgWT = (wtSum / res.length).toFixed(2);
+
+    // ✅ ADD TO TABLE
+    table.innerHTML += `
+    <tr style="font-weight:bold; background:#fef3c7;">
+        <td colspan="4">Average</td>
+        <td>${avgTAT}</td>
+        <td>${avgWT}</td>
+    </tr>`;
+
+    // 🎯 GANTT CHART
+    gantt.forEach(g => {
+        let div = document.createElement("div");
+        div.className = "block";
+        div.style.width = (g.time * 40) + "px";
+
+        div.innerHTML = `
+            ${g.p}
+            <div class="time-label">${g.end}</div>
+        `;
+
+        ganttDiv.appendChild(div);
+    });
 }
+
+    
 
 /* FCFS */
 function fcfs({at,bt}){
