@@ -1,10 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap');
-
 body {
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #fdf2f8, #f0f9ff);
     margin: 0;
-    background: linear-gradient(to right, #fef6ff, #f0f9ff);
-    color: #444;
 }
 
 h1 {
@@ -21,27 +18,15 @@ h1 {
 
 .panel {
     flex: 1;
-    background: white;
+    background: #ffffff;
     border-radius: 20px;
     padding: 20px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#badge {
-    background: #ddd6fe;
-    padding: 6px 12px;
-    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
 label {
-    display: block;
     margin-top: 10px;
+    display: block;
 }
 
 input, select {
@@ -50,7 +35,6 @@ input, select {
     margin-top: 5px;
     border-radius: 10px;
     border: 1px solid #ddd;
-    background: #f9fafb;
 }
 
 button {
@@ -65,21 +49,27 @@ button {
     cursor: pointer;
 }
 
-button:hover {
-    transform: scale(1.03);
-}
-
-#gantt {
+#ganttBlocks {
     display: flex;
-    flex-wrap: wrap;
     margin-top: 10px;
 }
 
-.block {
-    padding: 10px 15px;
-    margin: 4px;
-    background: #bae6fd;
-    border-radius: 8px;
+.gantt-block {
+    padding: 10px;
+    min-width: 40px;
+    text-align: center;
+    background: #c7d2fe;
+    margin-right: 2px;
+    border-radius: 6px;
+}
+
+#ganttTime {
+    display: flex;
+    font-size: 12px;
+}
+
+.time {
+    min-width: 40px;
 }
 
 table {
@@ -90,10 +80,9 @@ table {
 
 th {
     background: #fbcfe8;
-    padding: 10px;
 }
 
-td {
+td, th {
     padding: 10px;
     text-align: center;
     border-bottom: 1px solid #eee;

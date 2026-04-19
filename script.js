@@ -30,11 +30,12 @@ function solve() {
 
 function display(res, gantt, name) {
     let table = document.getElementById("table");
-    let ganttDiv = document.getElementById("gantt");
+    let blocks = document.getElementById("ganttBlocks");
+    let times = document.getElementById("ganttTime");
 
     table.innerHTML = "";
-    ganttDiv.innerHTML = "";
-    document.getElementById("badge").innerText = name;
+    blocks.innerHTML = "";
+    times.innerHTML = "";
 
     let tatSum = 0, wtSum = 0;
 
@@ -55,13 +56,18 @@ function display(res, gantt, name) {
 
     table.innerHTML += `
     <tr>
-        <td colspan="4"><b>Average</b></td>
+        <td colspan="4"><b>Avg</b></td>
         <td>${(tatSum/res.length).toFixed(2)}</td>
         <td>${(wtSum/res.length).toFixed(2)}</td>
     </tr>`;
 
+    let time = 0;
+    times.innerHTML += `<div class="time">0</div>`;
+
     gantt.forEach(p => {
-        ganttDiv.innerHTML += `<div class="block">${p}</div>`;
+        blocks.innerHTML += `<div class="gantt-block">${p}</div>`;
+        time++;
+        times.innerHTML += `<div class="time">${time}</div>`;
     });
 }
 
@@ -76,7 +82,8 @@ function fcfs({at, bt}) {
         res.push({id:i, at:at[i], bt:bt[i], ct,
             tat:ct-at[i], wt:ct-at[i]-bt[i]});
 
-        gantt.push("P"+i);
+        for (let j=0;j<bt[i];j++) gantt.push("P"+i);
+
         time = ct;
     }
     display(res, gantt, "FCFS");
@@ -84,7 +91,7 @@ function fcfs({at, bt}) {
 
 /* SJF */
 function sjf({at, bt}) {
-    let n = at.length, done=[], time=0, res=[], gantt=[];
+    let n=at.length, done=[], time=0, res=[], gantt=[];
 
     while(done.length<n){
         let idx=-1, min=Infinity;
@@ -96,10 +103,12 @@ function sjf({at, bt}) {
         if(idx==-1){ time++; continue; }
 
         let ct=time+bt[idx];
+
         res.push({id:idx,at:at[idx],bt:bt[idx],ct,
             tat:ct-at[idx],wt:ct-at[idx]-bt[idx]});
 
-        gantt.push("P"+idx);
+        for (let j=0;j<bt[idx];j++) gantt.push("P"+idx);
+
         done.push(idx);
         time=ct;
     }
@@ -120,7 +129,9 @@ function srtf({at, bt}) {
         }
         if(idx==-1){ time++; continue; }
 
-        rt[idx]--; gantt.push("P"+idx); time++;
+        rt[idx]--;
+        gantt.push("P"+idx);
+        time++;
 
         if(rt[idx]==0){ ct[idx]=time; completed++; }
     }
@@ -151,12 +162,16 @@ function rr({at, bt}, tq) {
         }
 
         let i=queue.shift();
-        gantt.push("P"+i);
 
         if(rt[i]>tq){
-            time+=tq; rt[i]-=tq;
+            for(let j=0;j<tq;j++) gantt.push("P"+i);
+            time+=tq;
+            rt[i]-=tq;
         } else {
-            time+=rt[i]; rt[i]=0; ct[i]=time;
+            for(let j=0;j<rt[i];j++) gantt.push("P"+i);
+            time+=rt[i];
+            rt[i]=0;
+            ct[i]=time;
         }
 
         for(let j=0;j<n;j++){
@@ -190,10 +205,12 @@ function priorityNP({at, bt, pr}) {
         if(idx==-1){ time++; continue; }
 
         let ct=time+bt[idx];
+
         res.push({id:idx,at:at[idx],bt:bt[idx],ct,
             tat:ct-at[idx],wt:ct-at[idx]-bt[idx]});
 
-        gantt.push("P"+idx);
+        for (let j=0;j<bt[idx];j++) gantt.push("P"+idx);
+
         done.push(idx);
         time=ct;
     }
@@ -214,7 +231,9 @@ function priorityP({at, bt, pr}) {
         }
         if(idx==-1){ time++; continue; }
 
-        rt[idx]--; gantt.push("P"+idx); time++;
+        rt[idx]--;
+        gantt.push("P"+idx);
+        time++;
 
         if(rt[idx]==0){ ct[idx]=time; completed++; }
     }
