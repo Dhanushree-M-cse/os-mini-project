@@ -14,17 +14,27 @@ function getData() {
     };
 }
 
-function solve(){
-    let algo = algoSelect();
-    let tq = parseInt(document.getElementById("tq").value)||1;
-    let d = getData();
+function solve() {
+    try {
+        let algo = document.getElementById("algo").value;
+        let tq = parseInt(document.getElementById("tq").value) || 1;
+        let data = getData();
 
-    if(algo==="fcfs") fcfs(d);
-    else if(algo==="sjf") sjf(d);
-    else if(algo==="srtf") srtf(d);
-    else if(algo==="rr") rr(d,tq);
-    else if(algo==="pnp") pnp(d);
-    else if(algo==="pp") pp(d);
+        // CLEAR OLD OUTPUT
+        document.getElementById("table").innerHTML = "";
+        document.getElementById("gantt").innerHTML = "";
+
+        if (algo === "fcfs") fcfs(data);
+        else if (algo === "sjf") sjf(data);
+        else if (algo === "srtf") srtf(data);
+        else if (algo === "rr") rr(data, tq);
+        else if (algo === "pnp") pnp(data);
+        else if (algo === "pp") pp(data);
+
+    } catch (e) {
+        console.error("Error:", e);
+        alert("Something went wrong. Check inputs.");
+    }
 }
 
 function algoSelect(){
