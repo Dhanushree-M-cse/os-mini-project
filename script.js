@@ -1,9 +1,13 @@
 window.onload = toggleFields;
 
 function toggleFields() {
-    let a = document.getElementById("algo").value;
-    tqDiv.style.display = a==="rr"?"block":"none";
-    priorityDiv.style.display = (a==="pnp"||a==="pp")?"block":"none";
+    let algo = document.getElementById("algo").value;
+
+    document.getElementById("tqDiv").style.display =
+        (algo === "rr") ? "block" : "none";
+
+    document.getElementById("priorityDiv").style.display =
+        (algo === "pnp" || algo === "pp") ? "block" : "none";
 }
 
 function getData() {
