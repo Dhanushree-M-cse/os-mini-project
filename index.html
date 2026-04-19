@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CPU Scheduling Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1> CPU Scheduling Simulator</h1>
+
+<div class="main">
+
+    <!-- INPUT -->
+    <div class="panel">
+        <h2>Input</h2>
+
+        <label>Algorithm</label>
+        <select id="algo" onchange="toggleFields()">
+            <option value="fcfs">FCFS</option>
+            <option value="sjf">SJF (Non-preemptive)</option>
+            <option value="srtf">SJF (Preemptive)</option>
+            <option value="rr">Round Robin</option>
+            <option value="pnp">Priority (Non-preemptive)</option>
+            <option value="pp">Priority (Preemptive)</option>
+        </select>
+
+        <label>Arrival Times</label>
+        <input id="at" value="0 2 4 7">
+
+        <label>Burst Times</label>
+        <input id="bt" value="5 3 8 6">
+
+        <div id="priorityDiv">
+            <label>Priority</label>
+            <input id="pr" value="1 2 3 4">
+        </div>
+
+        <div id="tqDiv">
+            <label>Time Quantum</label>
+            <input id="tq" value="2">
+        </div>
+
+        <button onclick="solve()">Run Simulation</button>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="panel">
+        <div class="header">
+            <h2>Output</h2>
+            <span id="badge">--</span>
+        </div>
+
+        <h3>Execution Flow</h3>
+        <div id="gantt"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>P</th>
+                    <th>AT</th>
+                    <th>BT</th>
+                    <th>CT</th>
+                    <th>TAT</th>
+                    <th>WT</th>
+                </tr>
+            </thead>
+            <tbody id="table"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
